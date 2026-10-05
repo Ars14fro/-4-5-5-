@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Protocol OS — персональный ассистент дисциплины</title>
+<meta name="description" content="Личная операционная система дня: таймлайн, привычки 24/7, помодоро, управление планом через JSON.">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Protocol OS">
+<link rel="apple-touch-icon" href="__ICON_DATAURI__">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0a0c'/%3E%3Cline x1='32' y1='10' x2='32' y2='54' stroke='%232e2e36' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='32' y1='20' x2='42' y2='20' stroke='%235a5a63' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='34' r='6' fill='%233ddc97'/%3E%3Cline x1='32' y1='48' x2='42' y2='48' stroke='%235a5a63' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="manifest" href="__MANIFEST_DATAURI__">
+<style>
+__CSS__
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="screen">
+
+    <!-- ======== TAB 1: TIMELINE ======== -->
+    <div class="tabview" id="tab-timeline">
+      <div class="hdr">
+        <div class="hdr-row">
+          <div>
+            <div class="hdr-title">Protocol OS</div>
+            <div class="hdr-sub" id="notif-today">что делать прямо сейчас — здесь</div>
+          </div>
+          <div style="font-size:11px;color:var(--faint);text-align:right;font-weight:600">local-first<br>без интернета ✓</div>
+        </div>
+        <div class="daynav">
+          <button class="arrow-btn" id="prev-day" aria-label="Вчера">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="daynav-center">
+            <div class="daynav-date" id="dn-date">—</div>
+            <div class="daynav-accent" id="dn-accent"></div>
+          </div>
+          <button class="arrow-btn" id="next-day" aria-label="Завтра">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <button class="today-pill" id="today-pill">↩ Вернуться к Сегодня</button>
+        <div class="hdr-pills">
+          <button class="pill" id="planb-toggle" title="Сжатый день: чек-минимум + опорные блоки">🅱️ План Б</button>
+          <button class="pill" id="dim-toggle" title="Тёплый вечерний режим (после 20:00 включается сам)">🌙 авто</button>
+        </div>
+        <div class="lo-line" id="lo-line"></div>
+      </div>
+
+      <div id="shift-panel"></div>
+
+      <div class="notif-banner" id="notif-banner">
+        <span>🔔</span>
+        <span style="flex:1">Включить уведомления о начале блоков?</span>
+        <button id="notif-enable">Включить</button>
+        <button class="nb-x" id="notif-dismiss" aria-label="Скрыть">✕</button>
+      </div>
+
+      <div class="timer-strip" id="timer-strip">
+        <span class="ts-dot"></span>
+        <span class="ts-text"></span>
+      </div>
+
+      <div class="day-summary" id="day-summary" style="display:none"></div>
+      <div class="timeline-wrap" id="timeline-wrap"></div>
+    </div>
+
+    <!-- ======== TAB 2: HABITS ======== -->
+    <div class="tabview" id="tab-habits"></div>
+
+    <!-- ======== TAB 3: MANAGE ======== -->
+    <div class="tabview" id="tab-manage"></div>
+
+  </div>
+
+  <!-- ======== BOTTOM NAV ======== -->
+  <nav id="nav">
+    <button class="nav-btn" data-tab="timeline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+      <span>Таймлайн</span>
+      <i class="nav-badge" id="badge-timeline"></i>
+    </button>
+    <button class="nav-btn" data-tab="habits">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span>Привычки 24/7</span>
+    </button>
+    <button class="nav-btn" data-tab="manage">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9" cy="7" r="2.2" fill="var(--bg2)"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="15" cy="17" r="2.2" fill="var(--bg2)"/></svg>
+      <span>Управление</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ======== BOTTOM SHEET ======== -->
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div id="sheet-handle-zone" style="cursor:grab;touch-action:none;padding-bottom:2px;flex:none">
+    <div class="sheet-handle"></div>
+  </div>
+  <div class="sheet-scroll" id="sheet-body"></div>
+  <div class="sheet-foot" id="sheet-foot"></div>
+</div>
+
+<!-- ======== EDITOR MODAL ======== -->
+<div class="modal-backdrop" id="editor-backdrop"></div>
+<div class="modal" id="editor" role="dialog" aria-modal="true">
+  <div id="ed-handle-zone" style="flex:none"><div class="sheet-handle"></div></div>
+  <div class="modal-head">
+    <h3 id="ed-mode-title">Редактировать блок</h3>
+    <button class="sh-close" id="ed-cancel" aria-label="Закрыть">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="modal-scroll">
+    <div class="field-row">
+      <div class="field"><label>Начало</label><input type="time" id="f-start" value="12:00"></div>
+      <div class="field"><label>Окончание</label><input type="time" id="f-end" value="12:30"></div>
+    </div>
+    <div class="field"><label>Название блока</label><input type="text" id="f-title" placeholder="Например: Спринты ⚡" autocomplete="off"></div>
+    <div class="field"><label>Категория / тег</label>
+      <div class="tag-picks">
+        <button class="tag-pick active" data-tag="routine" style="--tc:var(--tag-routine)">Режим</button>
+        <button class="tag-pick" data-tag="sport" style="--tc:var(--tag-sport)">Спорт</button>
+        <button class="tag-pick" data-tag="study" style="--tc:var(--tag-study)">Учёба</button>
+        <button class="tag-pick" data-tag="food" style="--tc:var(--tag-food)">Питание</button>
+        <button class="tag-pick" data-tag="care" style="--tc:var(--tag-care)">Уход</button>
+        <button class="tag-pick" data-tag="sleep" style="--tc:var(--tag-sleep)">Сон</button>
+      </div>
+    </div>
+    <div class="field"><label>Важное правило / предупреждение (callout)</label><input type="text" id="f-callout" placeholder="⛔ Бетон запрещён — только тартан/трава" autocomplete="off"></div>
+    <div class="field"><label>Встроенные утилиты</label>
+      <div class="tool-picks">
+        <button class="tool-pick" id="tp-pomodoro">🍅 Помодоро 25/5</button>
+        <button class="tool-pick" id="tp-carb">🍚 Таймер углеводов 35′</button>
+        <button class="tool-pick" id="tp-breath">🫁 Дыхание 6/12</button>
+      </div>
+    </div>
+    <div class="field"><label>Описание / протокол (переносы строк, • списки)</label><textarea id="f-details" placeholder="• Разминка 5–7 мин&#10;• 6×20 сек на 100–110%&#10;⛔ Отдых — ходьбой, не садиться"></textarea></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn btn-ghost" id="ed-cancel2" style="flex:none;width:110px">Отмена</button>
+    <button class="btn btn-accent" id="ed-save">💾 Сохранить блок</button>
+  </div>
+</div>
+
+<!-- ======== CONFIRM ======== -->
+<div class="confirm-backdrop" id="confirm">
+  <div class="confirm-box">
+    <p id="confirm-text"></p>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="confirm-cancel">Отмена</button>
+      <button class="btn btn-accent" id="confirm-ok">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== TIMER ALERT ======== -->
+<div class="alert-overlay" id="alert">
+  <div class="al-emoji" id="alert-emoji">⏰</div>
+  <div class="al-title" id="alert-title"></div>
+  <div class="al-sub" id="alert-sub"></div>
+  <button class="btn btn-accent" id="alert-ok">Принято</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+__DATA__
+</script>
+<script>
+__APP__
+</script>
+</body>
+</html>
